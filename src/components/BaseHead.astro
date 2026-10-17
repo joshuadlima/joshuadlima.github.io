@@ -1,0 +1,33 @@
+---
+import '../styles/global.css';
+import { site } from '../config/site';
+import { withBase } from '../lib/url';
+
+export interface Props {
+	/** Page title; the site name is appended. Omit on the home page. */
+	title?: string;
+	description?: string;
+}
+
+const { title, description = site.description } = Astro.props;
+const fullTitle = title ? `${title} | ${site.name}` : site.name;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+<meta name="theme-color" content="#000000" />
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<meta name="author" content={site.name} />
+<link rel="canonical" href={canonical} />
+<link rel="icon" type="image/svg+xml" href={withBase('favicon.svg')} />
+<link rel="icon" href={withBase('favicon.ico')} sizes="any" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={site.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta name="twitter:card" content="summary" />

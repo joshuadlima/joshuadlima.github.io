@@ -1,0 +1,47 @@
+---
+/** Fixed top-left monogram that expands to the full name on hover/focus. */
+import { site } from '../config/site';
+import { withBase } from '../lib/url';
+
+const [initial, ...rest] = site.name;
+---
+
+<a class="logo" href={withBase()} aria-label={`${site.name}, home`}>
+	<span aria-hidden="true">{initial}</span><span class="logo-rest" aria-hidden="true">{rest.join('')}</span>
+</a>
+
+<style>
+	.logo {
+		position: fixed;
+		top: 32px;
+		left: 16px;
+		z-index: 50;
+		display: flex;
+		font-size: 30px;
+		font-weight: 500;
+		line-height: 1;
+		white-space: pre;
+	}
+
+	.logo-rest {
+		display: inline-block;
+		max-width: 0;
+		overflow: hidden;
+		opacity: 0;
+		transition:
+			max-width 0.4s var(--ease),
+			opacity 0.3s;
+	}
+
+	.logo:hover .logo-rest,
+	.logo:focus-visible .logo-rest {
+		max-width: 12em;
+		opacity: 1;
+	}
+
+	@media (min-width: 768px) {
+		.logo {
+			left: 32px;
+		}
+	}
+</style>

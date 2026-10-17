@@ -1,0 +1,42 @@
+---
+import ProjectCard from '../components/ProjectCard.astro';
+import Section from '../components/Section.astro';
+import { getProjects } from '../lib/content';
+
+const projects = await getProjects();
+---
+
+<Section id="projects" title="projects">
+	{
+		projects.length === 0 ? (
+			<p class="empty">Projects coming soon.</p>
+		) : (
+			<ul class="project-list">
+				{projects.map((project) => (
+					<li>
+						<ProjectCard project={project} />
+					</li>
+				))}
+			</ul>
+		)
+	}
+</Section>
+
+<style>
+	.project-list {
+		display: grid;
+		gap: 32px;
+		max-width: var(--content-width);
+		margin-inline: auto;
+	}
+
+	.empty {
+		color: var(--muted);
+	}
+
+	@media (min-width: 768px) {
+		.project-list {
+			gap: 64px;
+		}
+	}
+</style>

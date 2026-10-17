@@ -1,0 +1,30 @@
+---
+import ExperienceItem from '../components/ExperienceItem.astro';
+import Section from '../components/Section.astro';
+import { getExperience } from '../lib/content';
+
+const roles = await getExperience();
+---
+
+<Section id="experience" title="experience">
+	<ol class="roles">
+		{
+			roles.map((role) => (
+				<li>
+					<ExperienceItem role={role} />
+				</li>
+			))
+		}
+	</ol>
+</Section>
+
+<style>
+	.roles {
+		display: grid;
+		gap: 96px;
+		max-width: var(--content-width);
+		margin: 64px auto 0;
+		padding: 0;
+		list-style: none;
+	}
+</style>

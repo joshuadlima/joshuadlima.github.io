@@ -1,0 +1,107 @@
+---
+import type { Project } from '../lib/content';
+import { withBase } from '../lib/url';
+import Icon from './Icon.astro';
+import TagList from './TagList.astro';
+
+interface Props {
+	project: Project;
+}
+
+const { id, data } = Astro.props.project;
+const { title, summary, tags, repo, demo } = data;
+---
+
+<article class="card">
+	<h3 class="card-title">
+		<!-- The link's ::after stretches over the card, so the whole card opens the project page. -->
+		<a href={withBase(`projects/${id}/`)}>{title}</a>
+	</h3>
+	<p class="card-summary">{summary}</p>
+	<TagList tags={tags} />
+	{
+		(repo || demo) && (
+			<div class="card-links">
+				{repo && (
+					<a href={repo} target="_blank" rel="noopener noreferrer" aria-label={`${title} source code`}>
+						<Icon name="github" size={20} />
+					</a>
+				)}
+				{demo && (
+					<a href={demo} target="_blank" rel="noopener noreferrer" aria-label={`${title} live demo`}>
+						<Icon name="external" size={20} />
+					</a>
+				)}
+			</div>
+		)
+	}
+</article>
+
+<style>
+	.card {
+		position: relative;
+		padding: 16px;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		transition: transform 0.3s var(--ease);
+	}
+
+	.card:hover {
+		transform: translateY(-10px);
+	}
+
+	.card:has(.card-title a:focus-visible) {
+		outline: 2px solid var(--text);
+		outline-offset: 3px;
+	}
+
+	.card-title {
+		margin-bottom: 16px;
+		padding-right: 64px;
+		font-size: clamp(20px, 3vw, 24px);
+	}
+
+	.card-title a::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+
+	.card-title a:focus-visible {
+		outline: none;
+	}
+
+	.card-summary {
+		margin-bottom: 24px;
+		font-size: 14px;
+	}
+
+	.card-links {
+		position: absolute;
+		top: 16px;
+		right: 16px;
+		z-index: 1; /* above the stretched title link */
+		display: flex;
+		gap: 12px;
+	}
+
+	.card-links a {
+		color: var(--muted);
+		transition: color 0.2s;
+	}
+
+	.card-links a:hover {
+		color: var(--text);
+	}
+
+	@media (min-width: 768px) {
+		.card {
+			padding: 32px;
+		}
+
+		.card-links {
+			top: 32px;
+			right: 32px;
+		}
+	}
+</style>

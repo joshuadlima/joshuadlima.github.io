@@ -1,0 +1,37 @@
+---
+/** Full-height page section with the site's lowercase "title." heading style. */
+interface Props {
+	id: string;
+	/** Rendered as "title." — omit for a section without a visible heading. */
+	title?: string;
+	/** Accessible name when there's no visible title. */
+	label?: string;
+}
+
+const { id, title, label } = Astro.props;
+const headingId = `${id}-heading`;
+---
+
+<section id={id} class="section" aria-labelledby={title ? headingId : undefined} aria-label={title ? undefined : label}>
+	<div class="section-inner">
+		{title && <h2 id={headingId} class="section-title">{title}.</h2>}
+		<slot />
+	</div>
+</section>
+
+<style>
+	.section {
+		min-height: 100vh;
+		padding: 80px var(--section-pad) 64px;
+	}
+
+	.section-inner {
+		max-width: var(--section-width);
+		margin-inline: auto;
+	}
+
+	.section-title {
+		margin-bottom: 32px;
+		font-size: clamp(36px, 7vw, 72px);
+	}
+</style>

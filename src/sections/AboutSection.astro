@@ -1,0 +1,97 @@
+---
+import Section from '../components/Section.astro';
+import { site } from '../config/site';
+import { Content, frontmatter } from '../content/about.md';
+import { withBase } from '../lib/url';
+---
+
+<Section id="about" label="About">
+	<div class="intro">
+		<!-- The page's only <h1>: hidden visually, but used by search engines and screen readers. -->
+		<h1 class="visually-hidden">{site.name}</h1>
+		<p class="headline">{frontmatter.headline}</p>
+		{
+			site.resume && (
+				<a class="link-muted resume" href={withBase(site.resume)} target="_blank" rel="noopener">
+					Download Resume
+				</a>
+			)
+		}
+		<a class="scroll-cue" href="#about-more" aria-label="Read more about me"></a>
+	</div>
+
+	<div id="about-more" class="about-more">
+		<h2 class="about-title">about.</h2>
+		<div class="about-body">
+			<Content />
+		</div>
+	</div>
+</Section>
+
+<style>
+	.intro {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 48px;
+		min-height: calc(100vh - 144px);
+		text-align: center;
+	}
+
+	.headline {
+		max-width: 768px;
+		font-size: clamp(30px, 5.5vw, 60px);
+		line-height: 1.2;
+	}
+
+	.resume {
+		font-size: 14px;
+	}
+
+	/* Bouncing triangle pointing to the next block. */
+	.scroll-cue {
+		width: 0;
+		height: 0;
+		border-inline: 8px solid transparent;
+		border-top: 12px solid var(--text);
+		opacity: 0.6;
+		animation: bob 2s ease-in-out infinite;
+	}
+
+	@keyframes bob {
+		50% {
+			transform: translateY(10px);
+			opacity: 0.3;
+		}
+	}
+
+	.about-more {
+		max-width: 896px;
+		margin-inline: auto;
+		padding-top: 80px;
+	}
+
+	.about-title {
+		margin-bottom: 32px;
+		font-size: clamp(36px, 7vw, 72px);
+	}
+
+	/* Paragraphs flow into two columns, with the right column offset downwards. */
+	.about-body {
+		display: grid;
+		gap: 32px;
+		font-size: 15px;
+	}
+
+	@media (min-width: 768px) {
+		.about-body {
+			grid-template-columns: 1fr 1fr;
+			column-gap: 32px;
+		}
+
+		.about-body > :global(:nth-child(even)) {
+			margin-top: 128px;
+		}
+	}
+</style>

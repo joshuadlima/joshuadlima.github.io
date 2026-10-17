@@ -1,0 +1,150 @@
+/* Styles for rendered Markdown (project READMEs, About, experience notes). Scoped to `.prose`. */
+
+.prose > * + * {
+	margin-top: 20px;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+	margin-top: 1.8em;
+	margin-bottom: -6px;
+}
+
+.prose h1 {
+	font-size: 32px;
+}
+
+.prose h2 {
+	font-size: 26px;
+}
+
+.prose h3 {
+	font-size: 21px;
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+	font-size: 17px;
+}
+
+.prose a {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	text-decoration-color: var(--muted);
+	transition: text-decoration-color 0.2s;
+}
+
+.prose a:hover {
+	text-decoration-color: var(--text);
+}
+
+.prose ul,
+.prose ol {
+	padding-inline-start: 22px;
+}
+
+.prose ul {
+	list-style: disc;
+}
+
+.prose li + li {
+	margin-top: 6px;
+}
+
+.prose li > ul,
+.prose li > ol {
+	margin-top: 6px;
+}
+
+.prose li::marker {
+	color: var(--muted);
+}
+
+.prose blockquote {
+	margin: 0;
+	padding: 0 16px;
+	border-inline-start: 2px solid var(--border);
+	color: var(--muted);
+}
+
+.prose hr {
+	height: 1px;
+	margin: 32px 0;
+	border: 0;
+	background: var(--border);
+}
+
+.prose summary {
+	cursor: pointer;
+	color: var(--muted);
+	transition: color 0.2s;
+}
+
+.prose summary:hover,
+.prose details[open] > summary {
+	color: var(--text);
+}
+
+.prose details[open] > summary {
+	margin-bottom: 12px;
+}
+
+.prose img {
+	height: auto;
+	border-radius: var(--radius);
+}
+
+/* Inline badges (e.g. shields.io) in READMEs sit on one line. */
+.prose p > a > img,
+.prose p > img[src*='shields.io'] {
+	display: inline-block;
+	border-radius: 0;
+}
+
+.prose table {
+	display: block;
+	width: 100%;
+	overflow-x: auto;
+	border-collapse: collapse;
+	font-size: 15px;
+}
+
+.prose th,
+.prose td {
+	padding: 6px 12px;
+	border: 1px solid #333;
+	text-align: start;
+}
+
+.prose th {
+	background: var(--surface);
+}
+
+.prose :not(pre) > code {
+	padding: 2px 6px;
+	font-family: var(--font-mono);
+	font-size: 0.875em;
+	background: var(--surface);
+	border-radius: 4px;
+}
+
+.prose pre {
+	padding: 16px;
+	overflow-x: auto;
+	font-family: var(--font-mono);
+	font-size: 14px;
+	line-height: 1.6;
+	tab-size: 4;
+	border: 1px solid #222;
+	border-radius: var(--radius);
+}
+
+/* Keep Shiki's token colours but use our own block background. */
+.prose pre.astro-code {
+	background-color: var(--surface) !important;
+}

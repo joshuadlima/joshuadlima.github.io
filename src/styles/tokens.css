@@ -1,0 +1,28 @@
+/* Design tokens. Dark, minimal palette modelled on charanravi.com. */
+
+:root {
+	--bg: #000;
+	--text: #fefeff;
+	--muted: #969696;
+	--border: #969696;
+	--surface: #111;
+	--radius: 8px;
+
+	--font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+	/* Horizontal padding of each section; wide enough on desktop to clear the fixed side nav. */
+	--section-pad: 16px;
+	--content-width: 672px;
+	--section-width: 1024px;
+
+	--ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+	color-scheme: dark;
+}
+
+@media (min-width: 768px) {
+	:root {
+		--section-pad: 128px;
+	}
+}

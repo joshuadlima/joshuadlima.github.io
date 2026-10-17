@@ -1,0 +1,107 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import Icon from '../../components/Icon.astro';
+import TagList from '../../components/TagList.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getProjects, type Project } from '../../lib/content';
+import { formatMonth } from '../../lib/format';
+import { withBase } from '../../lib/url';
+
+export const getStaticPaths = (async () => {
+	const projects = await getProjects();
+	return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+	project: Project;
+}
+
+const { project } = Astro.props;
+const { title, summary, date, tags, repo, demo, cover } = project.data;
+const { Content } = await render(project);
+---
+
+<BaseLayout title={title} description={summary}>
+	<article class="project">
+		<a class="link-muted back" href={withBase('#projects')}>
+			<Icon name="arrow-left" size={16} /> All projects
+		</a>
+
+		<header class="project-header">
+			<h1>{title}</h1>
+			<p class="summary">{summary}</p>
+			<p class="meta">
+				<time datetime={date.toISOString()}>{formatMonth(date)}</time>
+			</p>
+			<TagList tags={tags} />
+			{
+				(repo || demo) && (
+					<p class="links">
+						{repo && (
+							<a class="link-muted" href={repo} target="_blank" rel="noopener noreferrer">
+								<Icon name="github" size={16} /> Source
+							</a>
+						)}
+						{demo && (
+							<a class="link-muted" href={demo} target="_blank" rel="noopener noreferrer">
+								<Icon name="external" size={16} /> Live demo
+							</a>
+						)}
+					</p>
+				)
+			}
+		</header>
+
+		<div class="prose">
+			{cover && <Image src={cover} alt="" />}
+			<Content />
+		</div>
+	</article>
+</BaseLayout>
+
+<style>
+	.project {
+		max-width: var(--content-width);
+		margin-inline: auto;
+		padding: 112px var(--section-pad) 64px;
+		box-sizing: content-box;
+	}
+
+	.back,
+	.links a {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 14px;
+	}
+
+	.project-header {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin: 32px 0 48px;
+		padding-bottom: 32px;
+		border-bottom: 1px solid #333;
+	}
+
+	h1 {
+		font-size: clamp(36px, 7vw, 64px);
+	}
+
+	.summary {
+		font-size: 18px;
+		color: var(--muted);
+	}
+
+	.meta {
+		font-size: 14px;
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 24px;
+	}
+</style>

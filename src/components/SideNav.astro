@@ -1,0 +1,167 @@
+---
+/**
+ * Section navigation.
+ * - Desktop: fixed on the left, vertically centred; the section in view is highlighted.
+ * - Mobile: a menu button (top right) opens a full-screen overlay.
+ * Links point at the home page anchors, so the nav also works from project pages.
+ */
+import { site } from '../config/site';
+import { withBase } from '../lib/url';
+---
+
+<button class="menu-button" type="button" aria-label="Menu" aria-expanded="false" aria-controls="side-nav">
+	<span></span><span></span><span></span>
+</button>
+
+<nav class="side-nav" id="side-nav" aria-label="Sections">
+	<ul>
+		{
+			site.sections.map(({ id, label }) => (
+				<li>
+					<a href={withBase(`#${id}`)} data-section={id}>
+						{label}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</nav>
+
+<script>
+	const button = document.querySelector<HTMLButtonElement>('.menu-button');
+	const nav = document.querySelector<HTMLElement>('.side-nav');
+	const links = [...document.querySelectorAll<HTMLAnchorElement>('.side-nav a[data-section]')];
+
+	// Mobile menu
+	const setOpen = (open: boolean) => {
+		button?.setAttribute('aria-expanded', String(open));
+		nav?.classList.toggle('open', open);
+		document.documentElement.classList.toggle('menu-open', open);
+	};
+	button?.addEventListener('click', () => setOpen(button.getAttribute('aria-expanded') !== 'true'));
+	links.forEach((link) => link.addEventListener('click', () => setOpen(false)));
+	document.addEventListener('keydown', (event) => event.key === 'Escape' && setOpen(false));
+
+	// Highlight the section currently crossing the middle of the viewport.
+	const sections = links
+		.map((link) => document.getElementById(link.dataset.section ?? ''))
+		.filter((section): section is HTMLElement => section !== null);
+
+	const observer = new IntersectionObserver(
+		(entries) => {
+			for (const entry of entries) {
+				if (!entry.isIntersecting) continue;
+				for (const link of links) {
+					if (link.dataset.section === entry.target.id) link.setAttribute('aria-current', 'true');
+					else link.removeAttribute('aria-current');
+				}
+			}
+		},
+		{ rootMargin: '-50% 0px -50% 0px' },
+	);
+	sections.forEach((section) => observer.observe(section));
+</script>
+
+<style>
+	.side-nav a {
+		color: var(--muted);
+		transition: color 0.3s;
+	}
+
+	.side-nav a:hover,
+	.side-nav a[aria-current] {
+		color: var(--text);
+	}
+
+	/* Mobile: overlay menu */
+
+	.menu-button {
+		position: fixed;
+		top: 32px;
+		right: 16px;
+		z-index: 50;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 4px 0;
+	}
+
+	.menu-button span {
+		display: block;
+		width: 32px;
+		height: 2px;
+		background: var(--text);
+		transition:
+			transform 0.3s var(--ease),
+			opacity 0.3s;
+	}
+
+	.menu-button[aria-expanded='true'] span:nth-child(1) {
+		transform: translateY(10px) rotate(45deg);
+	}
+
+	.menu-button[aria-expanded='true'] span:nth-child(2) {
+		opacity: 0;
+	}
+
+	.menu-button[aria-expanded='true'] span:nth-child(3) {
+		transform: translateY(-10px) rotate(-45deg);
+	}
+
+	.side-nav {
+		position: fixed;
+		inset: 0;
+		z-index: 40;
+		padding: 96px 32px;
+		background: var(--bg);
+		transform: translateX(100%);
+		visibility: hidden;
+		transition:
+			transform 0.3s var(--ease),
+			visibility 0.3s;
+	}
+
+	.side-nav.open {
+		transform: none;
+		visibility: visible;
+	}
+
+	.side-nav li + li {
+		margin-top: 24px;
+	}
+
+	.side-nav a {
+		font-size: 24px;
+		font-weight: 500;
+	}
+
+	:global(html.menu-open) {
+		overflow: hidden;
+	}
+
+	/* Desktop: fixed vertical list on the left */
+
+	@media (min-width: 768px) {
+		.menu-button {
+			display: none;
+		}
+
+		.side-nav {
+			inset: 50% auto auto 32px;
+			padding: 0;
+			background: none;
+			transform: translateY(-50%);
+			visibility: visible;
+			transition: none;
+		}
+
+		.side-nav li + li {
+			margin-top: 16px;
+		}
+
+		.side-nav a {
+			font-size: 14px;
+			font-weight: 400;
+		}
+	}
+</style>

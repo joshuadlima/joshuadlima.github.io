@@ -1,0 +1,32 @@
+---
+import { site } from '../config/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+	<div class="footer-inner">
+	</div>
+</footer>
+
+<style>
+	.footer {
+		padding: 32px var(--section-pad);
+		font-size: 14px;
+		color: var(--muted);
+	}
+
+	.footer-inner {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 8px 16px;
+		max-width: var(--section-width);
+		margin-inline: auto;
+	}
+
+	.footer a {
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+</style>

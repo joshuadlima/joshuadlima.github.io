@@ -1,0 +1,356 @@
+---
+title: ChatterBox
+summary: An anonymous, interest-based real-time text and video chat application. (Similar to Omegle)
+date: 2026-02
+tags: [Django, Python, Flutter, Concurrency, WebRTC, Redis]
+repo: https://github.com/joshuadlima/ChatterBox
+featured: true
+---
+
+<!-- TODO: replace me, or remove `draft: true` to publish -->
+
+**An anonymous, interest-based real-time text and video chat application (Similar to Omegle).**
+
+[Watch the demo on YouTube](https://www.youtube.com/watch?v=t3GyR3w8R3U)
+
+
+## The Chatterbox App
+The Chatterbox app is built using Flutter and Riverpod for state management.
+
+### 1. The landing and edit interests screens (taken as a part of a live demo)
+<img width="1259" height="750" alt="Screenshot 2026-01-31 220058" src="https://github.com/user-attachments/assets/bf62a278-b2e7-422c-af48-22a6d6925dca" />
+
+### 2. The text chat and video chat screens (taken as a part of a live demo)
+<img width="1252" height="746" alt="Screenshot 2026-01-31 220043" src="https://github.com/user-attachments/assets/7c011ca8-7151-462b-94f1-2ecd3fc63a12" />
+
+
+## Backend Design & Architecture
+
+The backend utilizes an **Asynchronous Event Loop** model, allowing a single server process to handle thousands of concurrent WebSocket connections with a minimal memory footprint.
+
+### 1. Atomic Matching Logic
+To prevent race conditions (e.g., one user matching with multiple people simultaneously), the matching logic (and other redis operations that need to be atomic) is offloaded to **Redis Lua Scripts**.
+
+<details>
+<summary>Click to dive deeper.</summary>
+
+  <ol>
+    <li>
+      <strong>Understanding why Lua</strong>
+      <ul>
+        <li>Prevents Race Conditions: The Redis Server executes Lua scripts as a single, uninterruptible command. This ensures that in a matching scenario, a user is either fully matched or stays in the queue, thus it is impossible for a "double match" to occur.</li>
+        <li>Local Python locks only protect one server. Since I've designed it to run with multiple Django workers, Lua provides a global lock at the database level that all workers must respect.</li>
+        <li>Instead of sending several separate commands from Python to Redis, we send one script. This eliminates unnecessary network round-trips.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Solving the "Thundering Herd" with Asyncio Locks</strong>
+      <ul>
+        <li>When the server starts, multiple concurrent requests might try to load scripts into Redis at the same millisecond.</li>
+        <li>By using asyncio.Lock and double-checked locking, we ensure that only the first request performs the setup, while others wait for the result, preventing redundant processing.</li>
+      </ul>
+    </li>
+  </ol>
+  
+</details>
+
+### 2. Fully asynchronous
+To increase efficiency, better IO handling, and optimal memory usage.
+
+<details>
+<summary>Click to dive deeper.</summary>
+
+  <ol>
+    <li>
+      <strong>Understanding the CPU</strong>
+      <ul>
+        <li>If a CPU has 6 cores, it implies it can run 6 processes/threads in a truly parallel manner.</li>
+        <li>These cores are then context-switched by kernel/OS threads, and these threads are what are available to our applications for processing our logic.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Understanding Python</strong>
+      <ul>
+        <li>While Python can make use of multiple OS threads, the GIL acts as a bouncer, ensuring only one thread can execute Python bytecode at any given microsecond.</li>
+        <li>The Python interpreter controls this GIL for a given thread and even though multiple threads might be executing multiple pieces of logic.. it is serialized and thus doesn't achieve true parallelism</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Understanding Django and Web Servers</strong>
+      <ul>
+        <li>Django is a framework; its job is to ensure better design patterns are used, thus helping the development process. What actually takes care of the code execution is the web server (like uvicorn).</li>
+        <li>The web server watches for any requests to the app and executes them accordingly. These web servers can be sync or async.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Understanding Synchronous Web Servers</strong>
+      <ul>
+        <li>If it is sync, it means that it has a pool of threads available to it.</li>
+        <li>When a user connects, a thread is assigned only to serve him. Now, note that this user might not be doing anything that requires CPU attention.</li>
+        <li>The user might just be idle or awaiting some IO or network request, but he will still occupy the thread.</li>
+        <li>Say the pool has 40 threads, when the 41st user tries to connect.. he won't be able to until one of the others disconnects.</li>
+        <li>Each thread has its own private memory (stack) to store that specific user's progress. This means workers cannot easily finish each other's jobs; a user is 'stuck' with their assigned thread until the task is complete.</li>
+        <li>Another issue is the fact that each thread requires ~1MB, and if it isn't being utilized, then this causes a waste of resources for all the threads.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Understanding Asynchronous Web Servers</strong>
+      <ul>
+        <li>If the web server is async, it means that an event loop is going to be used and a single thread.</li>
+        <li>Here, units of work are broken into tasks, and these tasks are executed by the event loop.</li>
+        <li>If a task being executed reaches an await, then context switching happens, and another task is given execution time.</li>
+        <li>These tasks are pretty light, unlike threads, and thus context switching causes a very low overhead.</li>
+        <li>The key here is cooperative switching: switching will only happen if await is encountered.</li>
+      </ul>
+    </li>
+  </ol>
+
+</details>
+
+
+### 3. WebRTC for peer to peer video calls
+Makes use of the WebRTC APIs for video and audio calls between 2 browsers/apps. Our WebSocket backend serves as the means to share the SDP and candidate data between the 2 matched devices.
+
+<details>
+<summary>Click to dive deeper.</summary>
+
+  <ol>
+    <li>
+      <strong>Understanding WebRTC</strong>
+      <ul>
+        <li>WebRTC is a set of js. APIs for establishing a real time communication between 2 browsers/apps</li>
+        <li>The two devices share SDPs and then ICE Candidates over the signalling server. Once this is complete, an optimal route is established for communication and both parties can communicate.</li>
+        <li>In case of devices behind a symmetric NAT, the peer to peer communication can't be established. STUN server won't be sufficient in this case, we need a TURN server to relay the audio and video data. (Currently this project only uses Google's free STUN server)</li>
+        <li>STUN(Session Traversal Utilities for NAT) is a server that provides a client its public IP address and port number, allowing the client to establish a direct connection with other clients.</li>
+        <li>TURN(Traversal Using Relays around NAT) is a server that acts as an intermediary that relays packets of media data from one device to another. Its used if STUN can't be used to establish a peer to peer connection.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Understanding NAT (Network Address Translation)</strong>
+      <ul>
+        <li>In order to establish a peer to peer communication between 2 devices. Both devices need to have a way to connect or some way to identify the other device on the internet.</li>
+        <li>These devices don't have public IP addresses of their own and so they need to find out with their Router(which has a public IP) how they would be visible to other devices on the internet. (They contact STUN for such info)</li>
+        <li>NAT Translation Methods.
+          <ol>
+            <li>Full cone(One to one) NAT - Packets to the externalIP:Port on the router always maps to the internalIP:Port. No additional checks, once someone has your public assigned IP and port, they can communicate with you.</li>
+            <li>Address restricted NAT - Packets to the externalIP:Port on the router always maps to the internalIP:Port <strong>as long as the source address from the packet matches the table.</strong> A check is done to make sure we have communicated with that IP before.</li>
+            <li>Port restricted NAT - Packets to the externalIP:Port on the router always maps to the internalIP:Port <strong>as long as the source address and port from the packet matches the table.</strong> A check is done to make sure we have communicated with that IP:Port before.</li>
+            <li>Symmetric NAT (The fear of WebRTC) - Packets to the externalIP:Port on the router always maps to the internalIP:Port <strong>as long as the full payer matches the table.</strong> A check is done to make sure the destination IP:Port has communicated with that source IP:Port before.</li>
+          </ol>
+          <li>For Full cone, Address restricted and Port restricted NAT, STUN + ICE Hole punching mostly works fine. In the case of Symmetric, however, we would need a TURN relay.</li>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <strong>Understanding Signalling</strong>
+      <ul>
+        <li>For 2 devices to communicate using WebRTC, the caller and callee need to first exchange some data. This data can be shared by several means. (we use the WebSocket connection to share this info)</li>
+        <li>Firstly an SDP(Session Description Protocol) needs to be exchanged between the caller and callee. The SDP is a format for describing multimedia communication sessions mainly for streaming media.</li>
+        <li>Next each peer would make a call to their STUN server and get a list of ICE candidates that could be used and share this with their partner.</li>
+        <li>Getting this ICE candidate info can be time consuming and so a method called ICE Trickling is used to make a series of calls to STUN and share the info one by one to the peer.</li>
+        <li>Once this exchange happens, an optimal path is discovered and both peers can now communicate directly.</li>
+      </ul>
+    </li>
+</ol>
+
+</details>
+
+### 3. Data Structures
+* **`user_meta:{user_id}` (Hash):** Stores `{channel_id, interests, status}`.
+* **`interest:{topic}` (Set):** A collection of `user_id`s waiting for a match in a specific category.
+* **`active_matches` (Hash):** Bi-directional mapping of `user_id1 <-> user_id2` to maintain stateful chat sessions.
+
+---
+
+## Getting Started
+
+### Prerequisites
+* Docker & Docker Compose
+* Git
+
+### Running the Back-end Locally
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/joshuadlima/ChatterBox.git
+    cd ChatterBox/chatterbox_backend/chatterbox_django_app
+    ```
+2.  **Spin up the environment:**
+    ```bash
+    docker-compose up
+    ```
+3.  **Access the WebSocket:**
+    The backend will be accessible at: `ws://localhost:8000/ws/textchat?id=<sha256_hashed_device_id>`
+
+---
+
+## WebSocket API Reference
+
+### 1. Submit Interests
+Sets your profile tags. Must be done before matching.
+```json
+{
+    "type": "submit_interests",
+    "description": "Request to submit interests",
+    "timestamp": "2025-10-01T12:00:00",
+    "data": { "interests": ["coding", "gaming"] }
+}
+```
+
+### 2. Start Matching
+Finds a partner with overlapping interests. This also assigns a 'role' on success, this role can either be caller or callee which is used in case of WebRTC communication.
+```json
+{
+    "type": "start_matching",
+    "description": "Request to start matching",
+    "timestamp": "2025-10-01T12:00:00"
+}
+```
+
+### 3. Stop Matching
+Stops looking for a chat partner.
+```json
+{
+    "type": "end_matching",
+    "description": "Request to end matching",
+    "timestamp": "2025-10-01T12:00:00"
+}
+```
+
+### 4. WebRTC Signaling
+Shares the ICE candidate with the partner for WebRTC.
+```json
+{
+    "type": "webrtc_signal",
+    "description": "Incoming WebRTC signaling data",
+    "timestamp": "2025-10-01T12:00:00",
+    "data": { SDP / ICE Candidate Object }
+}
+```
+
+### 5. Chat Message
+Sends a message to your currently matched partner.
+```json
+{
+    "type": "chat_message",
+    "description": "Request to send chat message",
+    "timestamp": "2025-10-01T12:00:00",
+    "data": { "message": "Hello partner!" }
+}
+```
+
+### 6. End Chat
+Ends the chat with the current partner.
+```json
+{
+    "type": "end_chat",
+    "description": "Request to end chat",
+    "timestamp": "2025-10-01T12:00:00"
+}
+```
+
+## Backend Health
+
+### 1. Rate Limiting
+A Rate Limiter would ideally live on the Gateway. In our case, this isn't sufficient since a WebSocket backend needs rate limiting for both connections and message types.
+
+I've implemented a Token Bucket Rate Limiter using Redis + Lua scripts to safely handle concurrency issues. The Token Bucket algorithm is well-suited, as it enables short bursts of higher frequency messages, which could happen while using a chatting app.
+
+<details>
+<summary>Click to dive deeper.</summary>
+
+  <ol>
+    <li>
+      <strong>The approach</strong>
+      <ul>
+        <li>The app is designed to permit anonymous users. This changes things because we don't have a reliable way to identify and restrict users. Thus, we need to add friction.</li>
+        <li>We would need a multi-tiered approach for Rate Limiting since this is a WebSocket backend.</li>
+        <li>Tier 1 - IP Address Based Rate Limiting on Gateway Level</li>
+        <li>Tier 2 - Client ID-Based Rate Limiting in Application Code Level</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Tier 1 - IP Address Based Rate Limiting on Gateway Level</strong>
+      <ul>
+        <li>This prevents a potential attacker from spamming connections.</li>
+        <li>This approach, however, can cause the Coffee Shop Problem, where there could be several users under the same network trying to access our app and getting rate-limited for no real fault.</li>
+        <li>Thus, we need to keep a generous limit for this rate limiter so that a group of people under the same network wont been rate limited unnecessarily. However, it should be strict enough for an attacker not to be able to succeed.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Tier 2 - Client ID-Based Rate Limiting in Application Code Level</strong>
+      <ul>
+        <li>This prevents a potential attacker from spamming a particular message type. Once a connection is established, the gateway would essentially just forward frames. Some of these message types could trigger heavy operations (like find match).</li>
+        <li>The approach would be to use the ID sent by the client's device to uniquely identify the client and rate limit accordingly.</li>
+      </ul>
+    </li>
+  </ol>
+  
+</details>
+
+### 2. Soft and Hard Limits on Message Size
+Sending huge WebSocket messages could quickly eat up RAM (Resource Exhaustion Attack). 
+
+Thus, a Hard Limit(Connection termination) for WebSocket frame size has been added at the server level to 64KB (generous enough to permit the exchange of sometimes bulky (up to 20KB) WebRTC SDP Offers & Answers. A Soft Limit(Error message) of 2000 characters has also been added for chat messages, which is reasonable enough for an anonymous chat app.
+
+### 3. Heartbeat to Prevent Zombie Sockets
+There could be cases where a user abruptly loses internet connectivity, and the client doesn't have a chance to send a close frame to the backend. In these cases, the final cleanup of this users entries in the Redis data store doesn't occur, and the user stays there as a Zombie user. This is prevented by adding a Network-Level heartbeat that sends the required close frame if the client doesn't respond with a 'Pong' frame.
+
+A similar heartbeat has been added on the client side to prevent cell towers and load balancers from dropping the connection due to inactivity (the users might be reading messages or thinking, but are very much active).
+
+### 4. Load Testing and Benchmarking
+I deployed the Django Backend (4 workers) and Redis Server on a DigitalOcean droplet (1CPU, 2GB RAM, 50GB Disk).
+
+I used K6 to run a load test of 50 concurrent connections. It sustained 9.5 complete chat sessions/sec at p95 connection latency of 327ms and ~92KB memory overhead per connection((peak load - idle) / 50), across 2103 sessions with 0 failures. 
+
+At 400 concurrent connections, CPU reached 90% and connection latency degraded to p95 4.5s, though the server continued to operate with 0 failures. The CPU is the identified bottleneck at this scale. The fix for this is horizontal scaling (more machines, which my architecture supports) or vertical scaling (more cores).
+
+<details>
+<summary>Click to view run results.</summary>
+  
+```text
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: .\load-test-k6.js
+        output: -
+
+     scenarios: (100.00%) 2 scenarios, 50 max VUs, 4m1s max duration (incl. graceful stop):
+
+
+  █ TOTAL RESULTS
+
+    EXECUTION
+    iteration_duration....: avg=3.78s    min=3.6s     med=3.67s    max=14.1s  p(90)=3.78s    p(95)=3.83s
+    iterations............: 2103   9.677939/s
+    vus...................: 1      min=0       max=50
+    vus_max...............: 50     min=50      max=50
+
+    NETWORK
+    data_received.........: 1.1 MB 5.2 kB/s
+    data_sent.............: 2.2 MB 10 kB/s
+
+    WEBSOCKET
+    ws_connecting.........: avg=279.94ms min=102.29ms med=172.84ms max=10.59s p(90)=282.72ms p(95)=327.93ms
+    ws_msgs_received......: 4204   19.346675/s
+    ws_msgs_sent..........: 12612  58.040025/s
+    ws_session_duration...: avg=3.78s    min=3.6s     med=3.67s    max=14.1s  p(90)=3.78s    p(95)=3.83s
+    ws_sessions...........: 2103   9.677939/s
+
+
+
+
+running (3m37.3s), 00/50 VUs, 2103 complete and 0 interrupted iterations
+user_a ✓ [======================================] 00/25 VUs  3m30s
+user_b ✓ [======================================] 00/25 VUs  3m30s
+```
+
+</details>
+
+
+
+

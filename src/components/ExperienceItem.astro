@@ -1,0 +1,68 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import type { Role } from '../lib/content';
+import { formatDateRange } from '../lib/format';
+
+interface Props {
+	role: Role;
+}
+
+const { role } = Astro.props;
+const { company, role: title, location, start, end, url, logo } = role.data;
+const { Content } = await render(role);
+---
+
+<article class="role">
+	{logo && <Image src={logo} alt={`${company} logo`} height={64} class="role-logo" />}
+	<p class="role-company">
+		{url ? <a href={url} target="_blank" rel="noopener noreferrer" class="link-muted">{company}</a> : company}
+	</p>
+	<h3 class="role-title">{title}</h3>
+	<p class="role-meta">
+		<span>{formatDateRange(start, end)}</span>
+		{location && <span>{location}</span>}
+	</p>
+	<div class="prose role-body">
+		<Content />
+	</div>
+</article>
+
+<style>
+	.role {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.role-logo {
+		width: auto;
+		height: 64px;
+		margin-bottom: 16px;
+		object-fit: contain;
+	}
+
+	.role-company {
+		font-family: var(--font-mono);
+		font-size: 14px;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.role-title {
+		font-size: clamp(28px, 5vw, 36px);
+	}
+
+	.role-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 32px;
+		font-size: 14px;
+	}
+
+	.role-body {
+		font-size: 14px;
+		color: var(--muted);
+	}
+</style>

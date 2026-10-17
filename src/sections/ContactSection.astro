@@ -1,0 +1,106 @@
+---
+import { Image } from 'astro:assets';
+import Section from '../components/Section.astro';
+import { site } from '../config/site';
+import { withBase } from '../lib/url';
+---
+
+<Section id="contact" title="contact">
+	<div class="contact">
+		{site.photo && <Image class="photo" src={site.photo} alt={site.name} width={400} />}
+		<a class="email" href={`mailto:${site.email}`}>{site.email}</a>
+		{
+			site.status && (
+				<p class="status">
+					<span class="status-dot" aria-hidden="true" />
+					status : {site.status}
+				</p>
+			)
+		}
+		<ul class="links">
+			{
+				site.socials.map(({ label, href }) => (
+					<li>
+						<a class="link-muted" href={href} target="_blank" rel="noopener noreferrer me">
+							{label}
+						</a>
+					</li>
+				))
+			}
+			{
+				site.resume && (
+					<li>
+						<a class="link-muted" href={withBase(site.resume)} target="_blank" rel="noopener">
+							Resume
+						</a>
+					</li>
+				)
+			}
+		</ul>
+	</div>
+</Section>
+
+<style>
+	.contact {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
+		max-width: var(--content-width);
+		margin: 64px auto 0;
+		text-align: center;
+	}
+
+	.photo {
+		height: auto;
+		margin-bottom: 16px;
+		border-radius: var(--radius);
+	}
+
+	.email {
+		font-size: 20px;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+
+	.status {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--muted);
+	}
+
+	.status-dot {
+		position: relative;
+		width: 8px;
+		height: 8px;
+		background: var(--text);
+		border-radius: 50%;
+	}
+
+	.status-dot::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: inherit;
+		border-radius: inherit;
+		animation: ping 1.5s ease-in-out infinite;
+	}
+
+	@keyframes ping {
+		75%,
+		100% {
+			transform: scale(2.5);
+			opacity: 0;
+		}
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 8px 32px;
+		padding-top: 16px;
+		font-size: 14px;
+	}
+</style>
