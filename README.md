@@ -1,5 +1,5 @@
 # Credits
-[Project Name](https://github.com/charanravi-online/old_portfolio) by [@username](https://github.com/charanravi-online) - Inspired the design.
+[old_portfolio](https://github.com/charanravi-online/old_portfolio) by [@charanravi-online](https://github.com/charanravi-online) - Inspired the design.
 
 # Portfolio
 
