@@ -20,7 +20,7 @@ export interface Section {
 export const site = {
 	name: 'Joshua Dlima',
 	description: 'portfolio of Joshua Dlima, software engineer.',
-	email: 'joshuanoahdlima@gmail.com', // TODO: replace me
+	email: 'joshuanoahdlima@gmail.com',
 	/** Shown next to a pulsing dot in Contact. Set to null to hide. */
 	status: 'open to opportunities!' as string | null,
 	/** Full URL the resume links open, e.g. a Google Drive link. Set to null to hide the resume link. */
