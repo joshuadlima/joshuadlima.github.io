@@ -18,8 +18,8 @@ export interface Section {
 }
 
 export const site = {
-	name: 'Joshua Dlima',
-	description: 'portfolio of Joshua Dlima, software engineer.',
+	name: 'Joshua Dlima - Backend & Systems Engineer',
+	description: 'Backend and systems engineer building real-time, distributed services with Go, Django, and Redis. Explore my projects, writeups, and ways to get in touch.',
 	email: 'joshuanoahdlima@gmail.com',
 	/** Shown next to a pulsing dot in Contact. Set to null to hide. */
 	status: 'open to opportunities!' as string | null,
