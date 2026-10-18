@@ -2,7 +2,6 @@
 import { Image } from 'astro:assets';
 import Section from '../components/Section.astro';
 import { site } from '../config/site';
-import { withBase } from '../lib/url';
 ---
 
 <Section id="contact" title="contact">
@@ -30,7 +29,7 @@ import { withBase } from '../lib/url';
 			{
 				site.resume && (
 					<li>
-						<a class="link-muted" href={withBase(site.resume)} target="_blank" rel="noopener">
+						<a class="link-muted" href={site.resume} target="_blank" rel="noopener noreferrer">
 							Resume
 						</a>
 					</li>

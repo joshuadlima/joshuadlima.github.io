@@ -2,7 +2,6 @@
 import Section from '../components/Section.astro';
 import { site } from '../config/site';
 import { Content, frontmatter } from '../content/about.md';
-import { withBase } from '../lib/url';
 ---
 
 <Section id="about" label="About">
@@ -12,8 +11,8 @@ import { withBase } from '../lib/url';
 		<p class="headline">{frontmatter.headline}</p>
 		{
 			site.resume && (
-				<a class="link-muted resume" href={withBase(site.resume)} target="_blank" rel="noopener">
-					Download Resume
+				<a class="link-muted resume" href={site.resume} target="_blank" rel="noopener noreferrer">
+					Resume
 				</a>
 			)
 		}

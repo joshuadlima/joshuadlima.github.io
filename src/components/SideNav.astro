@@ -84,6 +84,15 @@ import { withBase } from '../lib/url';
 		flex-direction: column;
 		gap: 8px;
 		padding: 4px 0;
+		transition:
+			opacity 0.3s,
+			visibility 0.3s;
+	}
+
+	/* Mobile: tuck the button away once scrolled, unless the menu is open */
+	:global(html.scrolled:not(.menu-open)) .menu-button {
+		opacity: 0;
+		visibility: hidden;
 	}
 
 	.menu-button span {

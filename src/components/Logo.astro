@@ -1,14 +1,25 @@
 ---
-/** Fixed top-left monogram that expands to the full name on hover/focus. */
+/**
+ * Fixed top-left name. Shows the full name at the top of the page and collapses to the
+ * initials once scrolled (or expands again on hover/focus). On mobile it hides entirely
+ * while scrolled so it doesn't cover content.
+ */
 import { site } from '../config/site';
 import { withBase } from '../lib/url';
 
-const [initial, ...rest] = site.name;
+const [first = '', last = ''] = site.name.split(' ');
 ---
 
 <a class="logo" href={withBase()} aria-label={`${site.name}, home`}>
-	<span aria-hidden="true">{initial}</span><span class="logo-rest" aria-hidden="true">{rest.join('')}</span>
+	<span aria-hidden="true">{first.charAt(0).toUpperCase()}</span><span class="logo-rest" aria-hidden="true">{first.slice(1)}</span><span class="logo-gap" aria-hidden="true"> </span><span aria-hidden="true">{last.charAt(0).toUpperCase()}</span><span class="logo-rest" aria-hidden="true">{last.slice(1)}</span>
 </a>
+
+<script>
+	// Flag the page as scrolled so the logo and menu button can react.
+	const update = () => document.documentElement.classList.toggle('scrolled', window.scrollY > 24);
+	update();
+	window.addEventListener('scroll', update, { passive: true });
+</script>
 
 <style>
 	.logo {
@@ -21,22 +32,37 @@ const [initial, ...rest] = site.name;
 		font-weight: 500;
 		line-height: 1;
 		white-space: pre;
+		transition:
+			opacity 0.3s,
+			visibility 0.3s;
 	}
 
-	.logo-rest {
+	.logo-rest,
+	.logo-gap {
 		display: inline-block;
-		max-width: 0;
+		max-width: 12em;
 		overflow: hidden;
-		opacity: 0;
 		transition:
 			max-width 0.4s var(--ease),
 			opacity 0.3s;
 	}
 
-	.logo:hover .logo-rest,
-	.logo:focus-visible .logo-rest {
-		max-width: 12em;
-		opacity: 1;
+	.logo-gap {
+		max-width: 1em;
+	}
+
+	/* Collapsed to initials once the page has scrolled */
+	:global(html.scrolled) .logo:not(:hover, :focus-visible) .logo-rest,
+	:global(html.scrolled) .logo:not(:hover, :focus-visible) .logo-gap {
+		max-width: 0;
+		opacity: 0;
+	}
+
+	@media (max-width: 767px) {
+		:global(html.scrolled:not(.menu-open)) .logo {
+			opacity: 0;
+			visibility: hidden;
+		}
 	}
 
 	@media (min-width: 768px) {

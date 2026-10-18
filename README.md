@@ -24,7 +24,7 @@ Almost everything is Markdown or a single config file. Nothing below requires to
 | Headline and About paragraphs                     | `src/content/about.md`                    |
 | Projects                                          | `src/content/projects/<name>/index.md`    |
 | Jobs                                              | `src/content/experience/<name>.md`        |
-| Resume PDF, contact photo                         | `public/` (then point `site.ts` at them)  |
+| Contact photo                                     | `src/assets/` (then point `site.ts` at it) |
 
 Frontmatter is validated by the schemas in `src/content.config.ts`. A typo or a missing field fails
 `npm run dev` / `npm run build` with a clear message. Search for `TODO: replace me` to find placeholder content.
