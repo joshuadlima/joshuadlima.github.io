@@ -1,3 +1,6 @@
+# Credits
+[old_portfolio](https://github.com/charanravi-online/old_portfolio) by [@charanravi-online](https://github.com/charanravi-online) - Inspired the design.
+
 # Portfolio
 
 Personal portfolio built with [Astro](https://astro.build): plain HTML, CSS and a little vanilla JS, no UI framework.
