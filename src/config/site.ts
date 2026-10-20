@@ -24,7 +24,7 @@ export const site = {
 	/** Shown next to a pulsing dot in Contact. Set to null to hide. */
 	status: 'open to opportunities!' as string | null,
 	/** Full URL the resume links open, e.g. a Google Drive link. Set to null to hide the resume link. */
-	resume: 'https://drive.google.com/drive/folders/1gE4RtQ38VV22BfCUdDw695s6AeSFHoS9?usp=sharing' as string | null,
+	resume: 'https://drive.google.com/file/d/1Y61K4aDVAi_z5m6T20Pb7An6McshKw9S/view?usp=sharing' as string | null,
 	/** Photo shown in Contact, imported from src/assets/ so Astro optimizes it. Set to null to hide. */
 	photo: photo as ImageMetadata | null,
 	socials: [
