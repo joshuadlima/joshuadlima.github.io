@@ -7,8 +7,6 @@ repo: https://github.com/joshuadlima/ChatterBox
 featured: true
 ---
 
-<!-- TODO: replace me, or remove `draft: true` to publish -->
-
 **An anonymous, interest-based real-time text and video chat application (Similar to Omegle).**
 
 [Watch the demo on YouTube](https://www.youtube.com/watch?v=t3GyR3w8R3U)
@@ -155,99 +153,6 @@ Makes use of the WebRTC APIs for video and audio calls between 2 browsers/apps. 
 
 </details>
 
-### 3. Data Structures
-* **`user_meta:{user_id}` (Hash):** Stores `{channel_id, interests, status}`.
-* **`interest:{topic}` (Set):** A collection of `user_id`s waiting for a match in a specific category.
-* **`active_matches` (Hash):** Bi-directional mapping of `user_id1 <-> user_id2` to maintain stateful chat sessions.
-
----
-
-## Getting Started
-
-### Prerequisites
-* Docker & Docker Compose
-* Git
-
-### Running the Back-end Locally
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/joshuadlima/ChatterBox.git
-    cd ChatterBox/chatterbox_backend/chatterbox_django_app
-    ```
-2.  **Spin up the environment:**
-    ```bash
-    docker-compose up
-    ```
-3.  **Access the WebSocket:**
-    The backend will be accessible at: `ws://localhost:8000/ws/textchat?id=<sha256_hashed_device_id>`
-
----
-
-## WebSocket API Reference
-
-### 1. Submit Interests
-Sets your profile tags. Must be done before matching.
-```json
-{
-    "type": "submit_interests",
-    "description": "Request to submit interests",
-    "timestamp": "2025-10-01T12:00:00",
-    "data": { "interests": ["coding", "gaming"] }
-}
-```
-
-### 2. Start Matching
-Finds a partner with overlapping interests. This also assigns a 'role' on success, this role can either be caller or callee which is used in case of WebRTC communication.
-```json
-{
-    "type": "start_matching",
-    "description": "Request to start matching",
-    "timestamp": "2025-10-01T12:00:00"
-}
-```
-
-### 3. Stop Matching
-Stops looking for a chat partner.
-```json
-{
-    "type": "end_matching",
-    "description": "Request to end matching",
-    "timestamp": "2025-10-01T12:00:00"
-}
-```
-
-### 4. WebRTC Signaling
-Shares the ICE candidate with the partner for WebRTC.
-```json
-{
-    "type": "webrtc_signal",
-    "description": "Incoming WebRTC signaling data",
-    "timestamp": "2025-10-01T12:00:00",
-    "data": { SDP / ICE Candidate Object }
-}
-```
-
-### 5. Chat Message
-Sends a message to your currently matched partner.
-```json
-{
-    "type": "chat_message",
-    "description": "Request to send chat message",
-    "timestamp": "2025-10-01T12:00:00",
-    "data": { "message": "Hello partner!" }
-}
-```
-
-### 6. End Chat
-Ends the chat with the current partner.
-```json
-{
-    "type": "end_chat",
-    "description": "Request to end chat",
-    "timestamp": "2025-10-01T12:00:00"
-}
-```
-
 ## Backend Health
 
 ### 1. Rate Limiting
@@ -350,7 +255,3 @@ user_b ✓ [======================================] 00/25 VUs  3m30s
 ```
 
 </details>
-
-
-
-

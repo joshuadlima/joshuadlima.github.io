@@ -7,8 +7,7 @@ repo: https://github.com/joshuadlima/Wormhole
 featured: true
 ---
 
-<!-- Readme below -->
-
+# Wormhole
 **Wormhole allows you to expose local web servers sitting behind NATs or firewalls to the public internet securely. It is designed as a lightweight, single-binary alternative to tools like Ngrok or Cloudflare Tunnels.**
 
 ## Why?
@@ -19,54 +18,19 @@ Machines behind NATs and firewalls can make outbound connections but can't accep
 Router port forwarding needs router access and a public IP, and ssh -R works but leaves you to handle subdomain routing, TLS, reconnection, and server-side config yourself. Wormhole is a small, self-hostable reverse tunnel that handles those pieces.
 </details>
 
-## Installation
-Download the latest standalone binary for your system directly from the links below.
-* **Windows:** [Download wormhole-windows-amd64.exe](https://github.com/joshuadlima/Wormhole/releases/latest/download/wormhole-windows-amd64.exe)
-* **Mac (Apple Silicon):** [Download wormhole-mac-silicon](https://github.com/joshuadlima/Wormhole/releases/latest/download/wormhole-mac-silicon)
-* **Mac (Intel):** [Download wormhole-mac-intel](https://github.com/joshuadlima/Wormhole/releases/latest/download/wormhole-mac-intel)
-* **Linux:** [Download wormhole-linux-amd64](https://github.com/joshuadlima/Wormhole/releases/latest/download/wormhole-linux-amd64)
-
-## The Wormhole CLI (Usage)
-### 1. Clone the repo and build the binary, or install the latest binary directly from the links above.
-```bash
-    git clone https://github.com/joshuadlima/Wormhole.git
-    cd Wormhole
-    go build -o wormhole main.go
-```
-
-### 2. Start the server.
-Run this on your cloud VPS or a central machine. It will open port 4443 for clients to connect, and port 443 for web visitors.
-```bash
-    ./wormhole server
-```
-
-### 3. Start the client.
-Run this on your local laptop to expose a local web app (e.g., running on port 4200) to the public internet.
-If you leave the --subdomain flag blank, Wormhole will automatically generate a secure, random 32-character hex string for you.
-```bash
-    ./wormhole client --subdomain joshua --local 4200
-```
-
-### 4. Visit your app!
-Open your browser and navigate to: http://joshua.localhost:443 (or your server's public IP/Domain).
-
 ## Design & Architecture
 <img width="1584" height="1232" alt="Wormhole diagrams(1)" src="https://github.com/user-attachments/assets/a6bfe769-fbd9-402b-bafc-dfd6244928e6" />
 
 ### 1. TCP Multiplexing (Yamux)
 - Packs thousands of logical streams over a single network connection. Without multiplexing, we would need to establish several individual TCP network connections, which could result in resource exhaustion.
 
-### 2. Busybox pattern
-- Both the Client and Server logic are bundled into a single executable using Cobra. This is designed for self-hosting and ease of use.
-- Future scope: server flag to enable Redis store and authentication for a similar design as Ngrok or Cloudflare tunnels
-
-### 3. HTTP Reverse Proxy (Layer 7)
+### 2. HTTP Reverse Proxy (Layer 7)
 - The Server concurrently runs an HTTP Listener (default Port 443).
 - When a web visitor makes an HTTP request, the router parses the Host header, extracts the subdomain, looks up the corresponding yamux session in a thread-safe map, and opens a new binary stream.
 - Instead of opening a new internet connection, the httputil.ReverseProxy is injected with a custom DialContext that forces all plain-text HTTP data directly down the multiplexed Yamux stream.
 
-### 4. TLS certificate issuance
-- Adding TLS is important for a reverse-tunnel since several web features, packages, and services wouldn't work on an insecure page. The certmagic package has been used to automate the obtaining and renewal of TLS certificates.
+### 3. TLS certificate issuance
+- Adding TLS is important for a reverse tunnel since several web features, packages, and services wouldn't work on an insecure page. The certmagic package has been used to automate the obtaining and renewal of TLS certificates.
 
 <details>
 <summary>Click to dive deeper.</summary>
@@ -85,19 +49,19 @@ Open your browser and navigate to: http://joshua.localhost:443 (or your server's
 </details>
 
 
-### 5. Client-side backoff logic & Ghost connection handling
-- Several network hiccups and internet issues could cause the TCP connection to drop. In such cases, we shouldn't make the client reconnect manually. We thus wrap the connection logic in a loop with an exponential backoff retry mechanism so that the connection can retry and fix itself.
+### 4. Client-side backoff logic & Ghost connection handling
+- Several network hiccups and internet issues could cause the TCP connection to drop. In such cases, we shouldn't make the client reconnect manually. We thus wrap the connection logic in a loop with a exponential backoff retry mechanism so that the connection can retry and fix itself.
 - In cases where the internet or wifi suddenly drops, the client might not get a chance to communicate the disconnect with the VPS, and the connection will still exist as a Ghost connection. We thus use yamux keepalives (ping-pong mechanism) on both the client and the server end so that the connections are always in sync.
 
 
-### 6. Testing Plan
+### 5. Testing Plan
 <img width="3456" height="1024" alt="Wormhole diagrams(4)" src="https://github.com/user-attachments/assets/dbff950d-2733-4a8c-9e03-cbfba2475fdd" />
 <img width="2176" height="944" alt="Wormhole diagrams(5)" src="https://github.com/user-attachments/assets/9eeae93e-dddd-45c9-b880-44824ba81134" />
 
 <ul>
 	<li>The straightforward plan was to test the number of concurrent tunnels a standard server can handle and how much data can flow through it.</li>
 	<li>This is achieved by 2 test harnesses: a custom Go script to ramp up and do a load test for number of active tunnels and k6 for the data flow test.</li>
-	<li>The load test and the main server were run on separate VPSes in the same region (to reduce network latency and noise)</li>
+	<li>The load test and the main server were run on seperate VPSes in the same region (to reduce network latency and noise)</li>
 </ul>
 
 <details>
